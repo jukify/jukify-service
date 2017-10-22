@@ -40,7 +40,7 @@ def login(request):
         me = request_to_api('/me', auth_header)
 
         user = User(
-            spotify_id=me['id'],
+            id=me['id'],
             api_endpoint=me['href'],
             access_token=access_token,
             refresh_token=refresh_token,
@@ -64,21 +64,37 @@ def auth(request):
         "redirect_uri": REDIRECT_URI
     }
 
+    response = post_to_token(body_params, get_client_header())
+
+    user_tokens = json.loads(response.text)
+    return user_tokens
+
+
+def refresh(user_id):
+    user = User.objects.filter(id=user_id)[0]
+
+    body_params = {
+        "grant_type": "refresh_token",
+        "refresh_token": user.refresh_token
+    }
+
+    response = post_to_token(body_params, get_client_header())
+
+    user_tokens = json.loads(response.text)
+    return user_tokens
+
+
+def post_to_token(body, headers):
+    return requests.post(SPOTIFY_API_TOKEN_URL,
+                         data=body,
+                         headers=headers)
+
+
+def get_client_header():
     client_keys = "%s:%s" % (CLIENT_ID, CLIENT_SECRET)
     client_keys_base64 = base64.b64encode(client_keys.encode())
 
-    header_params = {
-        "Authorization": "Basic %s" % client_keys_base64
-    }
-
-    response = requests.post(SPOTIFY_API_TOKEN_URL,
-                             data=body_params,
-                             headers=header_params)
-
-    # getting tokens from response
-    user_tokens = json.loads(response.text)
-
-    return user_tokens
+    return {"Authorization": "Basic %s" % client_keys_base64}
 
 
 def get_auth_header(access_token):
