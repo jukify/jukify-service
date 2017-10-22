@@ -30,7 +30,7 @@ def get_me(request):
     if request.method == 'POST':
         auth_header = get_auth(request)
         profile_data = request_to_api('/me', auth_header)
-        return JsonResponse({'me': str(profile_data)})
+        return JsonResponse(profile_data, safe=False)
 
 
 def get_auth(request):
