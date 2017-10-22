@@ -1,7 +1,7 @@
 from django.db import models
 
 class User(models.Model):
-    spotify_id = models.CharField(max_length=256)
+    spotify_id = models.CharField(max_length=256, primary_key=True)
     api_endpoint = models.CharField(max_length=256)
     access_token = models.CharField(max_length=256)
     refresh_token = models.CharField(max_length=256)
@@ -13,7 +13,7 @@ class Group(models.Model):
     users = models.ManyToManyField(User)
 
 class Track(models.Model):
-    spotify_id = models.CharField(max_length=256)
+    spotify_id = models.CharField(max_length=256, primary_key=True)
     name = models.CharField(max_length=256)
     artists = models.CharField(max_length=512)
     preview_url = models.CharField(max_length=256)
