@@ -15,7 +15,9 @@ Including another URLconf
 """
 from django.conf.urls import url
 from django.contrib import admin
+from jukifyservice import views
 
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
+    url(r'^code/(?P<code>[\w-]+)', views.get_code),
 ]
