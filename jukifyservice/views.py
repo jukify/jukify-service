@@ -5,6 +5,7 @@ from rest_framework.parsers import JSONParser
 from jukifyservice.models import User
 from jukifyservice.serializers import UserSerializer
 
+from datetime import datetime
 import configparser
 import base64
 import requests
@@ -26,14 +27,34 @@ SPOTIFY_API_URL = "%s/%s" % (SPOTIFY_API_BASE_URL, SPOTIFY_API_VERSION)
 
 
 @csrf_exempt
-def get_me(request):
+def login(request):
     if request.method == 'POST':
-        auth_header = get_auth(request)
-        profile_data = request_to_api('/me', auth_header)
-        return JsonResponse(profile_data, safe=False)
+        user_tokens = auth(request)
+
+        access_token = user_tokens['access_token']
+        token_type = user_tokens['token_type']
+        expires_in = user_tokens['expires_in']
+        refresh_token = user_tokens['refresh_token']
+
+        auth_header = get_auth_header(access_token)
+        me = request_to_api('/me', auth_header)
+
+        user = User(
+            spotify_id=me['id'],
+            api_endpoint=me['href'],
+            access_token=access_token,
+            refresh_token=refresh_token,
+            expires_in=expires_in,
+            last_logged_at=datetime.now(),
+            display_name=me['display_name']
+        )
+
+        user.save()
+
+        return JsonResponse(me, safe=False)
 
 
-def get_auth(request):
+def auth(request):
     request_body = json.loads(request.body)
     code = request_body['code']
 
@@ -55,14 +76,13 @@ def get_auth(request):
                              headers=header_params)
 
     # getting tokens from response
-    response_json = json.loads(response.text)
-    access_token = response_json['access_token']
-    token_type = response_json['token_type']
-    expires_in = response_json['expires_in']
-    refresh_token = response_json['refresh_token']
-    auth_header = {"Authorization": "Bearer %s" % access_token}
+    user_tokens = json.loads(response.text)
 
-    return auth_header
+    return user_tokens
+
+
+def get_auth_header(access_token):
+    return {"Authorization": "Bearer %s" % access_token}
 
 
 def request_to_api(endpoint, auth_header):

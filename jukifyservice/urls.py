@@ -19,5 +19,5 @@ from jukifyservice import views
 
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
-    url(r'^login/', views.get_me),
+    url(r'^login/', views.login),
 ]
