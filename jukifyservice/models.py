@@ -6,7 +6,7 @@ class User(models.Model):
     access_token = models.CharField(max_length=256)
     refresh_token = models.CharField(max_length=256)
     expires_in = models.IntegerField(default=0)
-    last_logged_at = models.DateField(null=True)
+    last_logged_at = models.DateTimeField(null=True)
     display_name = models.CharField(max_length=256)
 
 class Group(models.Model):
