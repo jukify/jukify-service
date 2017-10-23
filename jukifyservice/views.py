@@ -98,7 +98,7 @@ def refresh(user_id):
 
 def get_client_header():
     client_keys = "%s:%s" % (CLIENT_ID, CLIENT_SECRET)
-    client_keys_base64 = base64.b64encode(client_keys.encode())
+    client_keys_base64 = base64.b64encode(client_keys.encode()).decode()
 
     return {"Authorization": "Basic %s" % client_keys_base64}
 
