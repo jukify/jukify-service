@@ -6,17 +6,15 @@ from jukifyservice.models import User
 from jukifyservice.serializers import UserSerializer
 
 from datetime import datetime
-import configparser
 import base64
 import requests
 import json
+import os
 
-# import client tokens from configs file
-configs = configparser.ConfigParser()
-configs.read('jukifyservice/configs.ini')
-CLIENT_ID = configs['jukify']['client_id']
-CLIENT_SECRET = configs['jukify']['client_secret']
-REDIRECT_URI = configs['jukify']['redirect_uri']
+# import client tokens from environment variables
+CLIENT_ID = os.environ['CLIENT_ID']
+CLIENT_SECRET = os.environ['CLIENT_SECRET']
+REDIRECT_URI = os.environ['REDIRECT_URI']
 
 # spotify urls
 SPOTIFY_AUTH_URL = "https://accounts.spotify.com/authorize"
