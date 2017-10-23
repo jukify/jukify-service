@@ -26,6 +26,8 @@ SPOTIFY_API_VERSION = "v1"
 SPOTIFY_API_URL = "%s/%s" % (SPOTIFY_API_BASE_URL, SPOTIFY_API_VERSION)
 
 
+# endpoints
+
 @csrf_exempt
 def login(request):
     if request.method == 'POST':
@@ -53,6 +55,8 @@ def login(request):
 
         return JsonResponse(me, safe=False)
 
+
+# auth methods
 
 def auth(request):
     request_body = json.loads(request.body)
@@ -84,12 +88,6 @@ def refresh(user_id):
     return user_tokens
 
 
-def post_to_token(body, headers):
-    return requests.post(SPOTIFY_API_TOKEN_URL,
-                         data=body,
-                         headers=headers)
-
-
 def get_client_header():
     client_keys = "%s:%s" % (CLIENT_ID, CLIENT_SECRET)
     client_keys_base64 = base64.b64encode(client_keys.encode())
@@ -99,6 +97,14 @@ def get_client_header():
 
 def get_auth_header(access_token):
     return {"Authorization": "Bearer %s" % access_token}
+
+
+# auxiliar methods
+
+def post_to_token(body, headers):
+    return requests.post(SPOTIFY_API_TOKEN_URL,
+                         data=body,
+                         headers=headers)
 
 
 def request_to_api(endpoint, auth_header):
