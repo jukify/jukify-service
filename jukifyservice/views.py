@@ -56,6 +56,12 @@ def login(request):
         return JsonResponse(me, safe=False)
 
 
+def list_users(request):
+    if request.method == 'GET':
+        users = [u.id for u in User.objects.all()]
+        return JsonResponse(users, safe=False)
+
+
 # auth methods
 
 def auth(request):
