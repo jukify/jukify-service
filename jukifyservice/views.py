@@ -16,6 +16,8 @@ CLIENT_ID = os.environ['CLIENT_ID']
 CLIENT_SECRET = os.environ['CLIENT_SECRET']
 REDIRECT_URI = os.environ['REDIRECT_URI']
 
+print(CLIENT_ID, CLIENT_SECRET, REDIRECT_URI)
+
 # spotify urls
 SPOTIFY_AUTH_URL = "https://accounts.spotify.com/authorize"
 SPOTIFY_API_TOKEN_URL = "https://accounts.spotify.com/api/token"
@@ -31,6 +33,7 @@ def login(request):
     if request.method == 'POST':
         user_tokens = auth(request)
 
+        print(user_tokens)
         access_token = user_tokens['access_token']
         token_type = user_tokens['token_type']
         expires_in = user_tokens['expires_in']
@@ -74,6 +77,7 @@ def auth(request):
 
     response = post_to_token(body_params, get_client_header())
 
+    print(response)
     user_tokens = json.loads(response.text)
     return user_tokens
 
@@ -106,6 +110,7 @@ def get_auth_header(access_token):
 # auxiliar methods
 
 def post_to_token(body, headers):
+    print(headers)
     return requests.post(SPOTIFY_API_TOKEN_URL,
                          data=body,
                          headers=headers)
