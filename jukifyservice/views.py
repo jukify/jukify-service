@@ -14,9 +14,8 @@ import os
 # import client tokens from environment variables
 CLIENT_ID = os.environ['CLIENT_ID']
 CLIENT_SECRET = os.environ['CLIENT_SECRET']
-REDIRECT_URI = os.environ['REDIRECT_URI']
 
-print(CLIENT_ID, CLIENT_SECRET, REDIRECT_URI)
+print(CLIENT_ID, CLIENT_SECRET)
 
 # spotify urls
 SPOTIFY_AUTH_URL = "https://accounts.spotify.com/authorize"
@@ -68,11 +67,12 @@ def list_users(request):
 def auth(request):
     request_body = json.loads(request.body)
     code = request_body['code']
+    redirect_uri = request_body['redirect_uri']
 
     body_params = {
         "grant_type": "authorization_code",
         "code": code,
-        "redirect_uri": REDIRECT_URI
+        "redirect_uri": redirect_uri
     }
 
     response = post_to_token(body_params, get_client_header())
