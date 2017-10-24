@@ -22,9 +22,11 @@ urlpatterns = [
     url(r'^login', views.login),
     url(r'^user', include([
         url(r'all', views.list_users),
+        url(r'(?P<user_id>[\w]+)/groups$', views.list_groups_from_user),
     ])),
     url(r'^group', include([
         url(r'^$', views.create_group),
-        url(r'(?P<group_id>[0-9]+)/add$', views.add_user_to_group),
+        url(r'(?P<group_id>[0-9]+)$', views.group_users),
+        url(r'(?P<group_id>[0-9]+)/recommendations$', views.group_recommendations),
     ]))
 ]

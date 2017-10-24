@@ -53,6 +53,27 @@ def login(request):
         return JsonResponse(me, safe=False)
 
 
+# user endpoints
+
+def list_users(request):
+    if request.method == 'GET':
+        users = [u.id for u in User.objects.all()]
+        return JsonResponse(users, safe=False)
+
+
+def list_groups_from_user(request, user_id):
+    if request.method == 'GET':
+        user = get_user(user_id)
+
+        if user != None:
+            groups = [g.id for g in Group.objects.filter(users=user)]
+            return JsonResponse(groups, safe=False)
+
+        return HttpResponseBadRequest()
+
+
+# group endpoints
+
 @csrf_exempt
 def create_group(request):
     if request.method == 'POST':
@@ -70,8 +91,17 @@ def create_group(request):
 
 
 @csrf_exempt
-def add_user_to_group(request, group_id):
-    if request.method == 'POST':
+def group_users(request, group_id):
+    if request.method == 'GET':
+        group = get_group(group_id)
+
+        if group != None:
+            users = [u.id for u in group.users.all()]
+            return JsonResponse(users, safe=False)
+
+        return HttpResponseBadRequest()
+
+    elif request.method == 'POST':
         body = json.loads(request.body)
         user_id = body['user_id']
         user = get_user(user_id)
@@ -83,11 +113,26 @@ def add_user_to_group(request, group_id):
 
         return HttpResponseBadRequest()
 
+    elif request.method == 'DELETE':
+        body = json.loads(request.body)
+        user_id = body['user_id']
+        user = get_user(user_id)
+        group = get_group(group_id)
 
-def list_users(request):
+        if user != None and group != None:
+            group.users.remove(user)
+            if not group.users.all():
+                group.delete()
+                return JsonResponse({"group": []})
+            user_ids = [u.id for u in group.users.all()]
+            return JsonResponse({"group": user_ids}, safe=False)
+
+        return HttpResponseBadRequest()
+
+
+def group_recommendations(request, group_id):
     if request.method == 'GET':
-        users = [u.id for u in User.objects.all()]
-        return JsonResponse(users, safe=False)
+        return JsonResponse({"recommendations": "Pink Floyd"})
 
 
 # auth methods
