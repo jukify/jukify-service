@@ -75,6 +75,7 @@ def auth(request):
         "redirect_uri": REDIRECT_URI
     }
 
+    print(body_params)
     response = post_to_token(body_params, get_client_header())
 
     print(response)
