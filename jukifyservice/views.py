@@ -1,8 +1,8 @@
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpResponse, JsonResponse, HttpResponseBadRequest
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.renderers import JSONRenderer
 from rest_framework.parsers import JSONParser
-from jukifyservice.models import User
+from jukifyservice.models import User, Group
 from jukifyservice.serializers import UserSerializer
 
 from datetime import datetime
@@ -14,8 +14,6 @@ import os
 # import client tokens from environment variables
 CLIENT_ID = os.environ['CLIENT_ID']
 CLIENT_SECRET = os.environ['CLIENT_SECRET']
-
-print(CLIENT_ID, CLIENT_SECRET)
 
 # spotify urls
 SPOTIFY_AUTH_URL = "https://accounts.spotify.com/authorize"
@@ -32,7 +30,6 @@ def login(request):
     if request.method == 'POST':
         user_tokens = auth(request)
 
-        print(user_tokens)
         access_token = user_tokens['access_token']
         token_type = user_tokens['token_type']
         expires_in = user_tokens['expires_in']
@@ -56,6 +53,37 @@ def login(request):
         return JsonResponse(me, safe=False)
 
 
+@csrf_exempt
+def create_group(request):
+    if request.method == 'POST':
+        body = json.loads(request.body)
+        creator_id = body['creator_id']
+        user = get_user(creator_id)
+
+        if user != None:
+            group = Group()
+            group.save()
+            group.users.add(user)
+            return JsonResponse({"group_id": group.id})
+
+        return HttpResponseBadRequest()
+
+
+@csrf_exempt
+def add_user_to_group(request, group_id):
+    if request.method == 'POST':
+        body = json.loads(request.body)
+        user_id = body['user_id']
+        user = get_user(user_id)
+        group = get_group(group_id)
+
+        if user != None and group != None:
+            group.users.add(user)
+            return HttpResponse()
+
+        return HttpResponseBadRequest()
+
+
 def list_users(request):
     if request.method == 'GET':
         users = [u.id for u in User.objects.all()]
@@ -75,10 +103,8 @@ def auth(request):
         "redirect_uri": redirect_uri
     }
 
-    print(body_params)
     response = post_to_token(body_params, get_client_header())
 
-    print(response)
     user_tokens = json.loads(response.text)
     return user_tokens
 
@@ -121,3 +147,19 @@ def request_to_api(endpoint, auth_header):
     full_endpoint = "%s%s" % (SPOTIFY_API_URL, endpoint)
     response = requests.get(full_endpoint, headers=auth_header)
     return json.loads(response.text)
+
+
+def get_user(user_id):
+    try:
+        user = User.objects.get(id=user_id)
+    except User.DoesNotExist:
+        user = None
+    return user
+
+
+def get_group(group_id):
+    try:
+        group = Group.objects.get(id=group_id)
+    except Group.DoesNotExist:
+        group = None
+    return group
