@@ -2,7 +2,7 @@ from django.http import HttpResponse, JsonResponse, HttpResponseBadRequest
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.renderers import JSONRenderer
 from rest_framework.parsers import JSONParser
-from jukifyservice.models import User, Group
+from jukifyservice.models import User, Group, Membership
 from jukifyservice.serializers import UserSerializer
 
 from datetime import datetime
@@ -66,7 +66,7 @@ def list_groups_from_user(request, user_id):
         user = get_user(user_id)
 
         if user != None:
-            groups = [g.id for g in Group.objects.filter(users=user)]
+            groups = [g.id for g in user.group_set.all()]
             return JsonResponse(groups, safe=False)
 
         return HttpResponseBadRequest()
@@ -84,7 +84,8 @@ def create_group(request):
         if user != None:
             group = Group()
             group.save()
-            group.users.add(user)
+            membership = Membership(user=user, group=group)
+            membership.save()
             return JsonResponse({"group_id": group.id})
 
         return HttpResponseBadRequest()
@@ -108,7 +109,8 @@ def group_users(request, group_id):
         group = get_group(group_id)
 
         if user != None and group != None:
-            group.users.add(user)
+            membership = Membership(user=user, group=group)
+            membership.save()
             return HttpResponse()
 
         return HttpResponseBadRequest()
@@ -120,7 +122,8 @@ def group_users(request, group_id):
         group = get_group(group_id)
 
         if user != None and group != None:
-            group.users.remove(user)
+            membership = Membership.objects.get(user=user, group=group)
+            membership.delete()
             if not group.users.all():
                 group.delete()
                 return JsonResponse({"group": []})
