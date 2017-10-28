@@ -66,7 +66,7 @@ def list_groups_from_user(request, user_id):
         user = get_user(user_id)
 
         if user != None:
-            groups = [g.id for g in Group.objects.filter(users=user)]
+            groups = [g.id for g in Group.objects.filter(users__id=user.id)]
             return JsonResponse(groups, safe=False)
 
         return HttpResponseBadRequest()
@@ -84,7 +84,7 @@ def create_group(request):
         if user != None:
             group = Group()
             group.save()
-            group.users.add(user)
+            group.users.add(user.id)
             return JsonResponse({"group_id": group.id})
 
         return HttpResponseBadRequest()
@@ -108,7 +108,7 @@ def group_users(request, group_id):
         group = get_group(group_id)
 
         if user != None and group != None:
-            group.users.add(user)
+            group.users.add(user.id)
             return HttpResponse()
 
         return HttpResponseBadRequest()
@@ -120,7 +120,7 @@ def group_users(request, group_id):
         group = get_group(group_id)
 
         if user != None and group != None:
-            group.users.remove(user)
+            group.users.remove(user.id)
             if not group.users.all():
                 group.delete()
                 return JsonResponse({"group": []})
