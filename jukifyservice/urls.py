@@ -25,7 +25,7 @@ urlpatterns = [
         url(r'(?P<user_id>[\w]+)/groups$', views.list_groups_from_user),
     ])),
     url(r'^group', include([
-        url(r'^$', views.create_group),
+        url(r'^$', views.groups),
         url(r'(?P<group_id>[0-9]+)$', views.group_users),
         url(r'(?P<group_id>[0-9]+)/recommendations$', views.group_recommendations),
     ]))

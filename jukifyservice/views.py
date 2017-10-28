@@ -75,7 +75,7 @@ def list_groups_from_user(request, user_id):
 # group endpoints
 
 @csrf_exempt
-def create_group(request):
+def groups(request):
     if request.method == 'POST':
         body = json.loads(request.body)
         creator_id = body['creator_id']
@@ -87,6 +87,17 @@ def create_group(request):
             membership = Membership(user=user, group=group)
             membership.save()
             return JsonResponse({"group_id": group.id})
+
+        return HttpResponseBadRequest()
+
+    elif request.method == 'DELETE':
+        body = json.loads(request.body)
+        group_id = body['group_id']
+        group = get_group(group_id)
+
+        if group != None:
+            group.delete()
+            return HttpResponse()
 
         return HttpResponseBadRequest()
 
