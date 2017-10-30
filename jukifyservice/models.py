@@ -31,4 +31,12 @@ class Track(models.Model):
 
 class Playlist(models.Model):
     group = models.ForeignKey(Group, on_delete=models.CASCADE)
-    tracks = models.ManyToManyField(Track)
+    tracks = models.ManyToManyField(
+        Track,
+        through='PlaylistTrack')
+    url = models.CharField(max_length=256)
+
+
+class PlaylistTrack(models.Model):
+    playlist = models.ForeignKey(Playlist, on_delete=models.CASCADE)
+    track = models.ForeignKey(Track, on_delete=models.CASCADE)

@@ -27,6 +27,7 @@ urlpatterns = [
     url(r'^group', include([
         url(r'^$', views.groups),
         url(r'(?P<group_id>[0-9]+)$', views.group_users),
+        url(r'(?P<group_id>[0-9]+)/playlist$', views.group_playlist),
         url(r'(?P<group_id>[0-9]+)/recommendations$', views.group_recommendations),
     ]))
 ]
