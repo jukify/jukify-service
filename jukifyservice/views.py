@@ -2,7 +2,7 @@ from django.http import HttpResponse, JsonResponse, HttpResponseBadRequest
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.renderers import JSONRenderer
 from rest_framework.parsers import JSONParser
-from jukifyservice.models import User, Group, Membership
+from jukifyservice.models import User, Group, Membership, Track, Playlist, PlaylistTrack
 from jukifyservice.serializers import UserSerializer
 
 from datetime import datetime
@@ -10,6 +10,9 @@ import base64
 import requests
 import json
 import os
+import logging
+
+logger = logging.getLogger(__name__)
 
 # import client tokens from environment variables
 CLIENT_ID = os.environ['CLIENT_ID']
@@ -93,7 +96,7 @@ def groups(request):
     elif request.method == 'DELETE':
         body = json.loads(request.body)
         group_id = body['group_id']
-        group = get_group(group_id)
+        group = get_group_by_id(group_id)
 
         if group != None:
             group.delete()
@@ -105,7 +108,7 @@ def groups(request):
 @csrf_exempt
 def group_users(request, group_id):
     if request.method == 'GET':
-        group = get_group(group_id)
+        group = get_group_by_id(group_id)
 
         if group != None:
             users = [u.id for u in group.users.all()]
@@ -117,7 +120,7 @@ def group_users(request, group_id):
         body = json.loads(request.body)
         user_id = body['user_id']
         user = get_user(user_id)
-        group = get_group(group_id)
+        group = get_group_by_id(group_id)
 
         if user != None and group != None:
             membership = Membership(user=user, group=group)
@@ -130,7 +133,7 @@ def group_users(request, group_id):
         body = json.loads(request.body)
         user_id = body['user_id']
         user = get_user(user_id)
-        group = get_group(group_id)
+        group = get_group_by_id(group_id)
 
         if user != None and group != None:
             membership = Membership.objects.get(user=user, group=group)
@@ -149,7 +152,22 @@ def group_recommendations(request, group_id):
         return JsonResponse({"recommendations": "Pink Floyd"})
 
 
+def group_playlist(request, group_id):
+    if request.method == 'GET':
+        group = get_group_by_id(group_id)
+        if group != None:
+            playlist = get_playlist_by_group(group)
+            if playlist != None:
+                return JsonResponse({"playlist_url": playlist.url})
+            logger.debug('No playlist found for group_id=', group_id)
+        else:
+            logger.debug('No group found for group_id=', group_id)
+
+        return HttpResponseBadRequest()
+
+
 # auth methods
+
 
 def auth(request):
     request_body = json.loads(request.body)
@@ -216,9 +234,17 @@ def get_user(user_id):
     return user
 
 
-def get_group(group_id):
+def get_group_by_id(group_id):
     try:
         group = Group.objects.get(id=group_id)
     except Group.DoesNotExist:
         group = None
     return group
+
+
+def get_playlist_by_group(group):
+    try:
+        playlist = Playlist.objects.get(group=group)
+    except Playlist.DoesNotExist:
+        playlist = None
+    return playlist
