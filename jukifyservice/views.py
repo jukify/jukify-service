@@ -125,7 +125,8 @@ def group_users(request, group_id):
         if user != None and group != None:
             membership = Membership(user=user, group=group)
             membership.save()
-            return HttpResponse()
+            user_ids = [u.id for u in group.users.all()]            
+            return JsonResponse({"group": user_ids}, safe=False)
 
         return HttpResponseBadRequest()
 
