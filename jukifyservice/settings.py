@@ -16,6 +16,12 @@ import dj_database_url
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
 
+DB_NAME = os.environ['JUKIFY_DB_NAME']
+DB_USER = os.environ['JUKIFY_DB_USER']
+DB_PASSWORD = os.environ['JUKIFY_DB_PASSWORD']
+DB_HOST = os.environ['JUKIFY_DB_HOST']
+DB_PORT = os.environ['JUKIFY_DB_PORT']
+
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.10/howto/deployment/checklist/
@@ -81,8 +87,12 @@ WSGI_APPLICATION = 'jukifyservice.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.path.join(BASE_DIR, DB_NAME),
+        'USER': DB_USER,
+        'PASSWORD': DB_PASSWORD,
+        'HOST': DB_HOST,
+        'PORT': DB_PORT,
     }
 }
 
