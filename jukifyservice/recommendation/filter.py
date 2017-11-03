@@ -1,6 +1,3 @@
-''' Largely base on example given in the implicit repo
-'''
-
 from __future__ import print_function
 
 import argparse
@@ -108,8 +105,9 @@ def calculate_similar_musics(input_filename, output_filename, model_name="als"):
     logging.debug("generated similar musics in %0.2fs",  time.time() - start)
 
 
-def calculate_recommendations(input_filename, output_filename, model_name="als"):
+def calculate_recommendations(input_filename, output_filename, model_name="als", users=[]):
     """ Generates music recommendations for each user in the dataset """
+    group = set(users)
     # train the model based off input params
     df, plays = read_data(input_filename)
 
@@ -137,8 +135,9 @@ def calculate_recommendations(input_filename, output_filename, model_name="als")
     user_plays = plays.T.tocsr()
     with open(output_filename, "w") as o:
         for userid, username in enumerate(df['user'].cat.categories):
-            for musicid, score in model.recommend(userid, user_plays):
-                o.write("%s\t%s\t%s\n" % (username, musics[musicid], score))
+            if not group or (username in group):
+                for musicid, score in model.recommend(userid, user_plays):
+                    o.write("%s\t%s\t%s\n" % (username, musics[musicid], score))
     logging.debug("generated recommendations in %0.2fs",  time.time() - start)
 
 
@@ -157,12 +156,17 @@ if __name__ == "__main__":
                         action="store_true")
     parser.add_argument('--param', action='append',
                         help="Parameters to pass to the model, formatted as 'KEY=VALUE")
+    parser.add_argument('--users', type=str, default='all',
+                        help="Comma separated list of users to whom we should recommend musics")
 
     args = parser.parse_args()
 
     logging.basicConfig(level=logging.DEBUG)
 
     if args.recommend:
-        calculate_recommendations(args.inputfile, args.outputfile, model_name=args.model)
+        users = []
+        if args.users != 'all':
+            users = args.users.split(',')
+        calculate_recommendations(args.inputfile, args.outputfile, model_name=args.model, users=users)
     else:
         calculate_similar_musics(args.inputfile, args.outputfile, model_name=args.model)
