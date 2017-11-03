@@ -40,3 +40,12 @@ class Playlist(models.Model):
 class PlaylistTrack(models.Model):
     playlist = models.ForeignKey(Playlist, on_delete=models.CASCADE)
     track = models.ForeignKey(Track, on_delete=models.CASCADE)
+
+
+class UsageData(models.Model):
+    class Meta:
+        unique_together = ('user_id', 'track_id')
+    
+    user_id = models.CharField(max_length=256)
+    track_id = models.CharField(max_length=256)
+    rating = models.IntegerField(default=0)
