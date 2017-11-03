@@ -2,8 +2,9 @@ from django.http import HttpResponse, JsonResponse, HttpResponseBadRequest
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.renderers import JSONRenderer
 from rest_framework.parsers import JSONParser
-from jukifyservice.models import User, Group, Membership, Track, Playlist, PlaylistTrack
+from jukifyservice.models import User, Group, Membership, Track, Playlist, PlaylistTrack, UsageData
 from jukifyservice.serializers import UserSerializer
+
 
 from datetime import datetime
 import base64
@@ -39,7 +40,7 @@ def login(request):
         refresh_token = user_tokens['refresh_token']
 
         auth_header = get_auth_header(access_token)
-        me = request_to_api('/me', auth_header)
+        me = get_from_api('/me', auth_header)
 
         user = User(
             id=me['id'],
@@ -125,7 +126,7 @@ def group_users(request, group_id):
         if user != None and group != None:
             membership = Membership(user=user, group=group)
             membership.save()
-            user_ids = [u.id for u in group.users.all()]            
+            user_ids = [u.id for u in group.users.all()]
             return JsonResponse({"group": user_ids}, safe=False)
 
         return HttpResponseBadRequest()
@@ -188,17 +189,19 @@ def auth(request):
 
 
 def refresh(user_id):
-    user = User.objects.filter(id=user_id)[0]
+    user = get_user(user_id)
 
-    body_params = {
-        "grant_type": "refresh_token",
-        "refresh_token": user.refresh_token
-    }
+    if user != None:
+        body_params = {
+            "grant_type": "refresh_token",
+            "refresh_token": user.refresh_token
+        }
 
-    response = post_to_token(body_params, get_client_header())
-
-    user_tokens = json.loads(response.text)
-    return user_tokens
+        response = post_to_token(body_params, get_client_header())
+        user_tokens = json.loads(response.text)
+        user.access_token = user_tokens['access_token']
+        user.expires_in = user_tokens['expires_in']
+        user.save()
 
 
 def get_client_header():
@@ -215,13 +218,21 @@ def get_auth_header(access_token):
 # auxiliar methods
 
 def post_to_token(body, headers):
-    print(headers)
     return requests.post(SPOTIFY_API_TOKEN_URL,
                          data=body,
                          headers=headers)
 
 
-def request_to_api(endpoint, auth_header):
+def get_from_user_api(endpoint, user_id):
+    refresh(user_id)
+    user = get_user(user_id)
+    if user != None:
+        auth_header = get_auth_header(user.access_token)
+        return get_from_api(endpoint, auth_header)
+    return None
+
+
+def get_from_api(endpoint, auth_header):
     full_endpoint = "%s%s" % (SPOTIFY_API_URL, endpoint)
     response = requests.get(full_endpoint, headers=auth_header)
     return json.loads(response.text)
@@ -249,3 +260,11 @@ def get_playlist_by_group(group):
     except Playlist.DoesNotExist:
         playlist = None
     return playlist
+
+
+def get_usage_data(user_id, track_id):
+    try:
+        data = UsageData.objects.get(user_id=user_id, track_id=track_id)
+    except UsageData.DoesNotExist:
+        data = None
+    return data
