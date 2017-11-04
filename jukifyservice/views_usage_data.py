@@ -18,7 +18,7 @@ def save_usage_data(user_id, track_id):
     data.save()
 
 
-def get_users_saved_tracks(request, user_id):
+def save_users_saved_tracks(request, user_id):
     """ Retrieves user's saved tracks and saves them
 
     ..  _Get a User’s Saved Tracks endpoint
@@ -44,12 +44,12 @@ def get_users_saved_tracks(request, user_id):
             request.GET._mutable = True
         request.GET['offset'] = str(
             saved_tracks['offset'] + saved_tracks['limit'])
-        return get_users_saved_tracks(request, user_id)
+        save_users_saved_tracks(request, user_id)
 
     return HttpResponse()
 
 
-def get_top_artists_tracks(request, user_id):
+def save_top_artists_tracks(request, user_id):
     """Retrieves user's top 10 artists and saves their top 5 tracks
 
     ..  _Get a User’s Top Artists and Tracks endpoint
@@ -70,5 +70,32 @@ def get_top_artists_tracks(request, user_id):
 
         for track in top_tracks['tracks'][:5]:
             save_usage_data(user_id, track['id'])
+
+    return HttpResponse()
+
+
+def save_top_tracks(request, user_id):
+    """Saves user's top tracks
+
+    ..  _Get a User’s Top Artists and Tracks endpoint
+        https://developer.spotify.com/web-api/get-users-top-artists-and-tracks/
+    """
+    limit = request.GET['limit']
+    offset = request.GET['offset']
+    endpoint = '/me/top/tracks?limit=' + limit + '&offset=' + offset
+    top_tracks_str = json.dumps(get_from_user_api(endpoint, user_id))
+    top_tracks = json.loads(top_tracks_str)
+
+    for track in top_tracks['items']:
+        if track['is_playable']:
+            save_usage_data(user_id, track['id'])
+
+    next_page = top_tracks['next']
+
+    if next_page != None:
+        if not request.GET._mutable:
+            request.GET._mutable = True
+        request.GET['offset'] = str(top_tracks['offset'] + top_tracks['limit'])
+        save_top_tracks(request, user_id)
 
     return HttpResponse()
