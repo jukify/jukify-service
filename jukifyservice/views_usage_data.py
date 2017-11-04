@@ -25,7 +25,7 @@ def dict_to_json(d):
     return json.loads(d_str)
 
 
-def save_users_saved_tracks(request, user_id):
+def save_saved_tracks(request, user_id):
     """ Retrieves user's saved tracks and saves them
 
     ..  _Get a User’s Saved Tracks endpoint
@@ -51,7 +51,7 @@ def save_users_saved_tracks(request, user_id):
             request.GET._mutable = True
         request.GET['offset'] = str(
             saved_tracks['offset'] + saved_tracks['limit'])
-        save_users_saved_tracks(request, user_id)
+        save_saved_tracks(request, user_id)
 
     return HttpResponse()
 
@@ -108,7 +108,7 @@ def save_top_tracks(request, user_id):
     return HttpResponse()
 
 
-def save_playlists_tracks(request, user_id):
+def save_playlists(request, user_id):
     """ Fetch the user's playlists and saves their tracks
 
     ..  _Get a List of Current User’s Playlists endpoint
@@ -129,7 +129,7 @@ def save_playlists_tracks(request, user_id):
         if not request.GET._mutable:
             request.GET._mutable = True
         request.GET['offset'] = str(playlists['offset'] + playlists['limit'])
-        save_playlists_tracks(request, user_id)
+        save_playlists(request, user_id)
 
     return HttpResponse()
 
