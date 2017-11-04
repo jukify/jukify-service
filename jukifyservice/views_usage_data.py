@@ -18,6 +18,13 @@ def save_usage_data(user_id, track_id):
     data.save()
 
 
+def dict_to_json(d):
+    """ Utility function for converting a dict to a json object
+    """
+    d_str = json.dumps(d)
+    return json.loads(d_str)
+
+
 def save_users_saved_tracks(request, user_id):
     """ Retrieves user's saved tracks and saves them
 
@@ -34,7 +41,7 @@ def save_users_saved_tracks(request, user_id):
 
     for track in saved_tracks['items']:
         track = track['track']
-        if track['is_playable']:
+        if 'is_playable' in track and track['is_playable']:
             save_usage_data(user_id, track['id'])
 
     next_page = saved_tracks['next']
@@ -87,7 +94,7 @@ def save_top_tracks(request, user_id):
     top_tracks = json.loads(top_tracks_str)
 
     for track in top_tracks['items']:
-        if track['is_playable']:
+        if 'is_playable' in track and track['is_playable']:
             save_usage_data(user_id, track['id'])
 
     next_page = top_tracks['next']
@@ -99,3 +106,51 @@ def save_top_tracks(request, user_id):
         save_top_tracks(request, user_id)
 
     return HttpResponse()
+
+
+def save_playlists_tracks(request, user_id):
+    """ Fetch the user's playlists and saves their tracks
+
+    ..  _Get a List of Current User’s Playlists endpoint
+        https://developer.spotify.com/web-api/get-a-list-of-current-users-playlists/
+    """
+    limit = request.GET['limit']
+    offset = request.GET['offset']
+    endpoint = '/me/playlists?limit=' + limit + '&offset=' + offset
+    playlists = dict_to_json(get_from_user_api(endpoint, user_id))
+
+    for playlist in playlists['items']:
+        owner_id = playlist['owner']['id']
+        save_tracks(user_id, owner_id, playlist['id'])
+
+    next_page = playlists['next']
+
+    if next_page != None:
+        if not request.GET._mutable:
+            request.GET._mutable = True
+        request.GET['offset'] = str(playlists['offset'] + playlists['limit'])
+        save_playlists_tracks(request, user_id)
+
+    return HttpResponse()
+
+
+def save_tracks(user_id, owner_id, playlist_id, offset='0'):
+    """ Saves a playlist's tracks
+
+    ..  _Get a Playlist’s Tracks endpoint
+        https://developer.spotify.com/web-api/get-playlists-tracks/
+    """
+    endpoint = '/users/' + owner_id + '/playlists/' + playlist_id + \
+        '/tracks?market=BR&fields=limit,offset,next,items(track(id,name,is_playable))&offset=' + offset
+    tracks = dict_to_json(get_from_user_api(endpoint, user_id))
+
+    for item in tracks['items']:
+        track = item['track']
+        if 'is_playable' in track and track['is_playable']:
+            save_usage_data(user_id, track['id'])
+
+    next_page = tracks['next']
+
+    if next_page != None:
+        offset = str(tracks['offset'] + tracks['limit'])
+        save_tracks(user_id, owner_id, playlist_id, offset)
