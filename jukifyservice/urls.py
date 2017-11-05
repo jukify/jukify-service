@@ -15,14 +15,22 @@ Including another URLconf
 """
 from django.conf.urls import include, url
 from django.contrib import admin
-from jukifyservice import views
+from jukifyservice import views, views_usage_data
 
 urlpatterns = [
     url(r'^admin', admin.site.urls),
     url(r'^login', views.login),
     url(r'^user', include([
         url(r'all', views.list_users),
-        url(r'(?P<user_id>[\w]+)/groups$', views.list_groups_from_user),
+        url(r'(?P<user_id>[\w]+)', include([
+            url(r'groups$', views.list_groups_from_user),
+            url(r'fetch', include([
+                url(r'saved-tracks$', views_usage_data.save_saved_tracks),
+                url(r'top-artists$', views_usage_data.save_top_artists_tracks),
+                url(r'top-tracks$', views_usage_data.save_top_tracks),
+                url(r'playlists$', views_usage_data.save_playlists),
+            ])),
+        ])),
     ])),
     url(r'^group', include([
         url(r'^$', views.groups),
