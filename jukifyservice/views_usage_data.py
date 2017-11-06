@@ -7,6 +7,10 @@
 from jukifyservice.views import *
 
 
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(" [UsageData] ")
+
+
 def save_usage_data(user_id, track_id):
     """ Utility function for saving usage data
     """
@@ -34,6 +38,10 @@ def save_saved_tracks(request, user_id):
     limit = request.GET['limit']
     offset = request.GET['offset']
     market = request.GET['market']
+
+    logger.info("Fetching saved tracks for user_id=%s, limit=%s, offset=%s",
+                user_id, limit, offset)
+
     endpoint = '/me/tracks?limit=' + limit + \
         '&offset=' + offset + '&market=' + market
     saved_tracks_str = json.dumps(get_from_user_api(endpoint, user_id))
@@ -69,6 +77,8 @@ def save_top_artists_tracks(request, user_id):
     top_artists_str = json.dumps(get_from_user_api(endpoint, user_id))
     top_artists = json.loads(top_artists_str)
 
+    logger.info("Fetching top artists for user_id=%s", user_id)
+
     for artist in top_artists['items']:
         artist_endpoint = '/artists/' + artist['id'] + '/top-tracks?country=BR'
         top_tracks_str = json.dumps(
@@ -89,6 +99,10 @@ def save_top_tracks(request, user_id):
     """
     limit = request.GET['limit']
     offset = request.GET['offset']
+
+    logger.info("Fetching top tracks for user_id=%s, limit=%s, offset=%s",
+                user_id, limit, offset)
+
     endpoint = '/me/top/tracks?limit=' + limit + '&offset=' + offset
     top_tracks_str = json.dumps(get_from_user_api(endpoint, user_id))
     top_tracks = json.loads(top_tracks_str)
@@ -116,6 +130,10 @@ def save_playlists(request, user_id):
     """
     limit = request.GET['limit']
     offset = request.GET['offset']
+
+    logger.info("Fetching playlists for user_id=%s, limit=%s, offset=%s",
+                user_id, limit, offset)
+
     endpoint = '/me/playlists?limit=' + limit + '&offset=' + offset
     playlists = dict_to_json(get_from_user_api(endpoint, user_id))
 
@@ -140,6 +158,9 @@ def save_tracks(user_id, owner_id, playlist_id, offset='0'):
     ..  _Get a Playlist’s Tracks endpoint
         https://developer.spotify.com/web-api/get-playlists-tracks/
     """
+    logger.info("Fetching tracks from playlist_id=%s for user_id=%s, offset=%s",
+                playlist_id, user_id, offset)
+
     endpoint = '/users/' + owner_id + '/playlists/' + playlist_id + \
         '/tracks?market=BR&fields=limit,offset,next,items(track(id,name,is_playable))&offset=' + offset
     tracks = dict_to_json(get_from_user_api(endpoint, user_id))
