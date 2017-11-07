@@ -49,27 +49,27 @@ def read_data(filename):
     start = time.time()
     logging.debug("reading data from %s", filename)
     data = pandas.read_table(filename,
-                             usecols=[0, 2, 3],
-                             names=['user', 'music', 'plays'],
+                             usecols=[0, 1, 2],
+                             names=['user', 'music', 'ratings'],
                              na_filter=False)
 
     # map each music and user to a unique numeric value
     data['user'] = data['user'].astype("category")
     data['music'] = data['music'].astype("category")
 
-    # create a sparse matrix of all the users/plays
-    plays = coo_matrix((data['plays'].astype(numpy.float32),
+    # create a sparse matrix of all the users/ratings
+    ratings = coo_matrix((data['ratings'].astype(numpy.float32),
                        (data['music'].cat.codes.copy(),
                         data['user'].cat.codes.copy())))
 
     logging.debug("read data file in %s", time.time() - start)
-    return data, plays
+    return data, ratings
 
 
 def calculate_similar_musics(input_filename, output_filename, model_name="als"):
     """ generates a list of similar musics by utiliizing the 'similar_items'
     api of the models """
-    df, plays = read_data(input_filename)
+    df, ratings = read_data(input_filename)
 
     # create a model from the input data
     model = get_model(model_name)
@@ -78,14 +78,14 @@ def calculate_similar_musics(input_filename, output_filename, model_name="als"):
     if issubclass(model.__class__, AlternatingLeastSquares):
         # lets weight these models by bm25weight.
         logging.debug("weighting matrix by bm25_weight")
-        plays = bm25_weight(plays, K1=100, B=0.8)
+        ratings = bm25_weight(ratings, K1=100, B=0.8)
 
         # also disable building approximate recommend index
         model.approximate_recommend = False
 
     logging.debug("training model %s", model_name)
     start = time.time()
-    model.fit(plays)
+    model.fit(ratings)
     logging.debug("trained model '%s' in %0.2fs", model_name, time.time() - start)
 
     # write out similar musics by popularity
@@ -109,7 +109,7 @@ def calculate_recommendations(input_filename, output_filename, model_name="als",
     """ Generates music recommendations for each user in the dataset """
     group = set(users)
     # train the model based off input params
-    df, plays = read_data(input_filename)
+    df, ratings = read_data(input_filename)
 
     # create a model from the input data
     model = get_model(model_name)
@@ -118,25 +118,25 @@ def calculate_recommendations(input_filename, output_filename, model_name="als",
     if issubclass(model.__class__, AlternatingLeastSquares):
         # lets weight these models by bm25weight.
         logging.debug("weighting matrix by bm25_weight")
-        plays = bm25_weight(plays, K1=100, B=0.8)
+        ratings = bm25_weight(ratings, K1=100, B=0.8)
 
         # also disable building approximate recommend index
         model.approximate_similar_items = False
 
     logging.debug("training model %s", model_name)
     start = time.time()
-    model.fit(plays)
+    model.fit(ratings)
     logging.debug("trained model '%s' in %0.2fs", model_name, time.time() - start)
 
     # generate recommendations for each user and write out to a file
     musics = dict(enumerate(df['music'].cat.categories))
     logging.debug("Generating recommendations")
     start = time.time()
-    user_plays = plays.T.tocsr()
+    user_ratings = ratings.T.tocsr()
     with open(output_filename, "w") as o:
         for userid, username in enumerate(df['user'].cat.categories):
             if not group or (username in group):
-                for musicid, score in model.recommend(userid, user_plays):
+                for musicid, score in model.recommend(userid, user_ratings, N=10):
                     o.write("%s\t%s\t%s\n" % (username, musics[musicid], score))
     logging.debug("generated recommendations in %0.2fs",  time.time() - start)
 
