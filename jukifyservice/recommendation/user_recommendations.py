@@ -32,7 +32,7 @@ def get_model(model_name):
 
     # some default params
     if issubclass(model_class, AlternatingLeastSquares):
-        params = {'factors': 50, 'dtype': numpy.float32}
+        params = {'factors': 100, 'dtype': numpy.float32}
     elif model_name == "bm25":
         params = {'K1': 100, 'B': 0.5}
     else:
@@ -136,10 +136,9 @@ def calculate_recommendations(input_filename, output_filename, model_name="als",
     with open(output_filename, "w") as o:
         for userid, username in enumerate(df['user'].cat.categories):
             if not group or (username in group):
-                for musicid, score in model.recommend(userid, user_ratings, N=10):
+                for musicid, score in model.recommend(userid, user_ratings, N=30):
                     o.write("%s\t%s\t%s\n" % (username, musics[musicid], score))
     logging.debug("generated recommendations in %0.2fs",  time.time() - start)
-
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Generates similar musics"
