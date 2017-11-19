@@ -30,6 +30,7 @@ class Track(models.Model):
 
 
 class Playlist(models.Model):
+    id = models.CharField(max_length=256, primary_key=True)
     group = models.ForeignKey(Group, on_delete=models.CASCADE)
     tracks = models.ManyToManyField(
         Track,
