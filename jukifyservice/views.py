@@ -255,6 +255,16 @@ def create_playlist(user_id, group_id, tracks):
             response = json.loads(response.text)
             playlist_id = response['id']
             logger.info("Created playlist=%s for user=%s, group=%s" % (playlist_id, user_id, group_id))
+            endpoint += '/%s/tracks' % playlist_id
+            uris = json.dumps(['spotify:track:%s' % track_id for track_id in tracks])
+            refresh(user_id)
+            headers = get_auth_header(user.access_token)
+            headers['Content-Type'] = 'application/json'
+            body = "{\"uris\": " + uris + "}"
+            logger.info("Adding tracks for playlist=%s" % playlist_id)
+            response = requests.post(endpoint, data=body, headers=headers)
+            if response.status_code == 201:
+                logger.info("Error adding tracks to playlist=%s" % playlist_id)
             return playlist_id
         else:
             logger.info("Error creating playlist for user=%s, group=%s" % (user_id, group_id))
