@@ -113,10 +113,8 @@ def group_users(request, group_id):
         group = get_group_by_id(group_id)
 
         if group != None:
-            users = [u.id for u in group.users.all()]
+            users = [{ 'id': u.id, 'name': u.display_name } for u in group.users.all()]
             return JsonResponse(users, safe=False)
-
-        return HttpResponseBadRequest()
 
     elif request.method == 'POST':
         body = json.loads(request.body)
@@ -129,8 +127,6 @@ def group_users(request, group_id):
             membership.save()
             user_ids = [u.id for u in group.users.all()]
             return JsonResponse({"group": user_ids}, safe=False)
-
-        return HttpResponseBadRequest()
 
     elif request.method == 'DELETE':
         body = json.loads(request.body)
@@ -147,7 +143,7 @@ def group_users(request, group_id):
             user_ids = [u.id for u in group.users.all()]
             return JsonResponse({"group": user_ids}, safe=False)
 
-        return HttpResponseBadRequest()
+    return HttpResponseBadRequest()
 
 
 def group_recommendations(request, group_id):
