@@ -62,7 +62,7 @@ def login(request):
 
 def list_users(request):
     if request.method == 'GET':
-        users = [u.id for u in User.objects.all()]
+        users = [{'id': u.id, 'name': u.display_name} for u in User.objects.all()]
         return JsonResponse(users, safe=False)
 
 
