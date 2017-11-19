@@ -125,8 +125,8 @@ def group_users(request, group_id):
         if user != None and group != None:
             membership = Membership(user=user, group=group)
             membership.save()
-            user_ids = [u.id for u in group.users.all()]
-            return JsonResponse({"group": user_ids}, safe=False)
+            users = [{'id': u.id, 'name': u.display_name} for u in group.users.all()]
+            return JsonResponse({"group": users}, safe=False)
 
     elif request.method == 'DELETE':
         body = json.loads(request.body)
@@ -140,8 +140,8 @@ def group_users(request, group_id):
             if not group.users.all():
                 group.delete()
                 return JsonResponse({"group": []})
-            user_ids = [u.id for u in group.users.all()]
-            return JsonResponse({"group": user_ids}, safe=False)
+            users = [{'id': u.id, 'name': u.display_name} for u in group.users.all()]
+            return JsonResponse({"group": users}, safe=False)
 
     return HttpResponseBadRequest()
 
