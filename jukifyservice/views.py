@@ -160,6 +160,7 @@ def group_playlist(request, group_id):
             if playlist != None:
                 return JsonResponse({"playlist_url": playlist.url})
             logger.debug('No playlist found for group_id=', group_id)
+            return JsonResponse({}, safe=False)
         else:
             logger.debug('No group found for group_id=', group_id)
 
